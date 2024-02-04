@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import boto3
 from io import BytesIO
+from io import StringIO
+import json
 import pyarrow.parquet as pq
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -63,11 +65,11 @@ y_pred = rf.predict(X_pred[['expected', 'month', 'day', 'weekday']])
 
 # Sauvegarder les prédictions dans S3
 for i, date in enumerate(dates):
-    predictions_df = pd.DataFrame(y_pred[i], index=['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat']).T
-    predictions_df['date'] = date.strftime("%Y-%m-%d")  # S'assurer que la date est au format string pour PyArrow
-    buffer = BytesIO()
-    table = pa.Table.from_pandas(predictions_df)
-    pq.write_table(table, buffer)
-    output_key = f'output/predictions_{date.strftime("%Y-%m-%d")}.parquet'
-    s3.put_object(Bucket=bucket_name, Key=output_key, Body=buffer.getvalue())
+    predictions_df = pd.DataFrame([{
+        'date': date.strftime("%Y-%m-%d"),
+        **{col: y_pred[i][j] for j, col in enumerate(['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat'])}
+    }])
+    json_str = predictions_df.to_json(orient='records')
+    output_key = f'output/predictions_{date.strftime("%Y-%m-%d")}.json'
+    s3.put_object(Bucket=bucket_name, Key=output_key, Body=json_str)
     print(f'Predictions for {date.strftime("%Y-%m-%d")} saved to S3: {bucket_name}/{output_key}')
