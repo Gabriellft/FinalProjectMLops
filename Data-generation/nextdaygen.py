@@ -7,7 +7,7 @@ import boto3
 from io import BytesIO
 
 # Configuration pour la simulation de données
-end_date = datetime(2024, 2, 5)  # Date de fin pour la génération de données
+end_date = datetime(2024, 2, 7)  # Date de fin pour la génération de données
 
 # Items pour les petits-déjeuners
 items = ['croissants', 'pain au chocolat', 'baguettes', 'fruits', 'jus d\'orange', 'café']
