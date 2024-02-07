@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/SPO/Desktop/MLOPS%20FINAL%20PROJECT/mlruns/957943680830975153/d11a4613a3b64c6888200648068088a4/artifacts
+end_time: 1707334131434
+entry_point_name: ''
+experiment_id: '957943680830975153'
+lifecycle_stage: active
+run_id: d11a4613a3b64c6888200648068088a4
+run_name: amusing-cat-915
+run_uuid: d11a4613a3b64c6888200648068088a4
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1707334124066
+status: 4
+tags: []
+user_id: SPO

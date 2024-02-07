@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/SPO/Desktop/MLOPS%20FINAL%20PROJECT/mlruns/0/0f8645b6fe704140b02a6aa543801889/artifacts
+end_time: 1707334683075
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 0f8645b6fe704140b02a6aa543801889
+run_name: kindly-mink-499
+run_uuid: 0f8645b6fe704140b02a6aa543801889
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1707334671535
+status: 3
+tags: []
+user_id: SPO
