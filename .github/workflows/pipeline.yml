@@ -8,13 +8,11 @@ on:
 
 permissions:
   contents: read
+  id-token: write # Pour l'authentification avec AWS
 
 jobs:
   pytest:
-
     runs-on: ubuntu-latest
-    
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
@@ -25,5 +23,33 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest
-        
-    
+
+  build-and-push-docker:
+    needs: pytest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Nécessaire pour l'authentification AWS
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-3
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        role-session-name: GitHubActionsSession
+    - name: Login to Amazon ECR
+      run: |
+        aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 426166744527.dkr.ecr.eu-west-3.amazonaws.com
+    - name: Build, tag, and push Docker image to Amazon ECR
+      run: |
+        docker build -t ml-datagen ./Data-generation/API-DATA-GEN
+        docker tag ml-datagen:latest 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-datagen:latest
+        docker push 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-datagen:latest
+    - name: Update Lambda function to use new Docker image
+      run: |
+        aws lambda update-function-code --function-name ml-datagen --image-uri 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-datagen:latest
