@@ -1,38 +1,87 @@
+/* App.css */
+
+/* Styles globaux */
+body {
+  font-family: 'Nunito', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f7f8fc; 
+  color: #33374B; /* Couleur de texte générale plus douce */
+}
+
+/* Styles de l'application */
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  min-height: 100vh;
+}
+
+.header {
+  background-color: #394263; 
   color: white;
+  text-align: center;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ajout d'ombre pour du relief */
 }
 
-.App-link {
-  color: #61dafb;
+.dashboard {
+  display: flex;
+  flex-direction: row;
+  transition: 0.3s; /* Transition douce pour le re-dimensionnement */
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Styles de la barre latérale */
+.sidebar {
+  width: 250px;
+  background-color: #394263; /* Plus foncé pour contraster avec le contenu */
+  color: white;
+  padding: 20px;
+  transition: all 0.3s; /* Transition douce pour les effets de survol */
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin-bottom: 15px; /* Espacement légèrement augmenté */
+}
+
+.sidebar a {
+  text-decoration: none;
+  color: #adb5bd; /* Couleur plus douce pour un contraste moins agressif */
+  font-weight: bold;
+}
+
+.sidebar a:hover {
+  color: white;
+  margin-left: 5px; /* Déplacement subtil pour indiquer l'interaction */
+}
+
+/* Styles du contenu principal */
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+  background-color: #ffffff; /* Fond clair pour le contraste */
+  border-left: 2px solid #edf2f7; /* Ligne de séparation subtile */
+}
+
+/* Styles des liens dans le contenu principal */
+.main-content a {
+  text-decoration: none; /* Supprimer le soulignage par défaut */
+  color: #0052cc; /* Couleur cohérente avec l'en-tête */
+  font-weight: bold; /* Rendre les liens audacieux */
+}
+
+.main-content a:hover {
+  text-decoration: underline; /* Indicateur clair de lien cliquable */
+}
+
+/* Styles pour le graphique (TimeSeriesChart) */
+#chart {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px; /* Bords arrondis pour un look moderne */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre plus légère et plus douce */
 }
