@@ -1,4 +1,4 @@
-name: pipeline
+name: Deploy to Amazon ECS and Update Lambda
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  id-token: write # Pour l'authentification avec AWS
+  id-token: write # Pour l'authentification avec OpenID Connect
 
 jobs:
   pytest:
