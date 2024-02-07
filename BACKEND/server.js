@@ -9,6 +9,24 @@ const s3 = new AWS.S3();
 const bucketName = 'hotel-breakfast';
 
 app.use(cors());
+app.use(express.json());
+
+const fetchGenerateDateData = async (endDate) => {
+  const apiUrl = '/api/v0/generate_date'; // Assurez-vous que cette URL correspond à l'endpoint de votre serveur
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ end_date: endDate }),
+    });
+    const data = await response.json();
+    console.log(data); // Traitez les données comme nécessaire
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données', error);
+  }
+};
 
 // Endpoint pour récupérer les prédictions
 app.get('/predictions', async (req, res) => {
@@ -72,6 +90,34 @@ app.get('/historical-data', async (req, res) => {
       res.status(500).send('Erreur lors de la récupération du fichier historical_data.json');
   }
 });
+
+const fetch = require('node-fetch');
+
+// Endpoint pour générer des données basées sur la date de fin
+app.post('/api/v0/generate_date', async (req, res) => {
+  const { end_date } = req.body;
+  const apiUrl = 'https://4pjofaefviftewv7vuyuidevha0rylgc.lambda-url.eu-west-3.on.aws/api/v0/generate_date';
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+      },
+      body: JSON.stringify({ end_date }),
+    });
+    
+    if (!response.ok) throw new Error('Erreur lors de l\'appel à l\'API externe');
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Erreur lors de la génération des données');
+  }
+});
+
 
 app.listen(port, () => {
   console.log(`Serveur démarré sur http://localhost:${port}`);
