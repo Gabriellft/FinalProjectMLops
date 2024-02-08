@@ -315,12 +315,42 @@ async def root(date_input: DateInput = Body(...)):
 
         # Faire des prédictions
         y_pred = rf.predict(X_pred[['expected', 'month', 'day', 'weekday']])
+        print(y_pred)
+        print(X_pred['expected'])
+        # Ajuster les prédictions si outlier
+        adjusted_y_pred = []
 
-        # Sauvegarder les prédictions dans S3
+        for i, expected in enumerate(X_pred['expected']):
+            # Initialise un tableau pour les prédictions ajustées de cette itération
+            adjusted_preds = np.zeros_like(y_pred[i])
+            
+            # Définir une valeur cible basée sur 'expected'
+            target_value = expected  # La cible est la valeur 'expected' elle-même
+            print("target",target_value)
+            # Calculer les bornes
+            lower_bound = target_value * 0.9
+            upper_bound = target_value * 1.1
+            
+            # Itérer sur chaque prédiction dans y_pred[i]
+            for j, pred in enumerate(y_pred[i]):
+                # Vérifier si chaque prédiction individuelle est dans l'intervalle acceptable
+                if lower_bound <= pred <= upper_bound:
+                    adjusted_preds[j] = pred  # La prédiction reste inchangée
+                else:
+                    # Ajuster la prédiction pour qu'elle soit plus proche de la cible tout en restant dans les bornes
+                    fluctuation_factor = np.random.uniform(round(lower_bound), round(upper_bound))
+        
+                    # Appliquer la fluctuation à la prédiction
+                    fluctuated_pred = fluctuation_factor
+                    
+                    adjusted_preds[j] = fluctuated_pred
+            
+            adjusted_y_pred.append(adjusted_preds)
+        # Sauvegarder les prédictions ajustées dans S3
         for i, date in enumerate(dates):
             predictions_df = pd.DataFrame([{
                 'date': date.strftime("%Y-%m-%d"),
-                **{col: y_pred[i][j] for j, col in enumerate(['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat'])}
+                **{col: adjusted_y_pred[i][j] for j, col in enumerate(['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat'])}
             }])
             json_str = predictions_df.to_json(orient='records')
             output_key = f'output/predictions_{date.strftime("%Y-%m-%d")}.json'
