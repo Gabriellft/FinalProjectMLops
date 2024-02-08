@@ -130,7 +130,23 @@ def get_preprocessed_df(bucket, preprocessed_key):
         return df_preprocessed
     except s3.exceptions.NoSuchKey:
         return None
+def get_preprocessed_df(bucket, preprocessed_key):
+    try:
+        response = s3.get_object(Bucket=bucket, Key=preprocessed_key)
+        df_preprocessed = pq.read_table(BytesIO(response['Body'].read())).to_pandas()
+        return df_preprocessed
+    except s3.exceptions.NoSuchKey:
+        return None
 
+# Fonction pour convertir le DataFrame mis à jour en JSON et le sauvegarder dans S3
+def save_df_as_json_to_s3(df, bucket, key):
+    json_buffer = BytesIO()
+    # Convertir le DataFrame en JSON
+    df.to_json(json_buffer, orient='records', lines=True)
+    json_buffer.seek(0)
+    # Stocker le JSON dans S3
+    s3.put_object(Bucket=bucket, Key=key, Body=json_buffer.getvalue())
+    print(f'JSON file saved to S3: {key}')
 # Prétraitement et formatage du DataFrame pour les nouveaux jours uniquement
 def preprocess_and_update_df(df_existing, df_new):
     df_new['date'] = pd.to_datetime(df_new['date'])
@@ -160,15 +176,7 @@ def preprocess_df(df):
     df_pivoted['weekday'] = df_pivoted['date'].dt.weekday
     return df_pivoted
 
-# Fonction pour convertir le DataFrame mis à jour en JSON et le sauvegarder dans S3
-def save_df_as_json_to_s3(df, bucket, key):
-    json_buffer = BytesIO()
-    # Convertir le DataFrame en JSON
-    df.to_json(json_buffer, orient='records', lines=True)
-    json_buffer.seek(0)
-    # Stocker le JSON dans S3
-    s3.put_object(Bucket=bucket, Key=key, Body=json_buffer.getvalue())
-    print(f'JSON file saved to S3: {key}')
+
 
 def find_latest_model(bucket, prefix):
     # Liste tous les objets dans le bucket avec le préfixe donné
@@ -260,6 +268,8 @@ async def root(date_input: DateInput = Body(...)):
         # transform to json for backend 
         
 
+        # Processus principal pour la sauvegarde en JSON
+        preprocessed_key = 'preprocessed_data/preprocessed_latest.parquet'
         historical_key = 'curred_data/historical/historical_data.json'  # Clé pour le fichier JSON historique
 
         df_preprocessed = get_preprocessed_df(bucket_name, preprocessed_key)
