@@ -17,7 +17,7 @@ mlflow.set_experiment('Hotel Breakfast Prediction')
 # Initialiser le client S3
 s3 = boto3.client('s3')
 bucket_name = 'hotel-breakfast'
-data_key = 'curred_data/preprocessed_latest.parquet'
+data_key = 'preprocessed_data/preprocessed_latest.parquet'
 model_params_key = 'model/best_params.joblib'
 
 def load_data_from_s3(bucket, key):

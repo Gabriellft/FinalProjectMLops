@@ -26,7 +26,7 @@ def save_df_as_json_to_s3(df, bucket, key):
     print(f'JSON file saved to S3: {key}')
 
 # Processus principal pour la sauvegarde en JSON
-preprocessed_key = 'curred_data/preprocessed_latest.parquet'
+preprocessed_key = 'preprocessed_data/preprocessed_latest.parquet'
 historical_key = 'curred_data/historical/historical_data.json'  # Clé pour le fichier JSON historique
 
 df_preprocessed = get_preprocessed_df(bucket_name, preprocessed_key)

@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/SPO/Desktop/MLOPS%20FINAL%20PROJECT/mlruns/957943680830975153/10a3d53593f247baa384966fc5020d3e/artifacts
+end_time: 1707400517423
+entry_point_name: ''
+experiment_id: '957943680830975153'
+lifecycle_stage: active
+run_id: 10a3d53593f247baa384966fc5020d3e
+run_name: secretive-ray-518
+run_uuid: 10a3d53593f247baa384966fc5020d3e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1707400509967
+status: 3
+tags: []
+user_id: SPO

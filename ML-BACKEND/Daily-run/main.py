@@ -13,7 +13,7 @@ import pyarrow as pa
 # Initialiser le client S3
 s3 = boto3.client('s3')
 bucket_name = 'hotel-breakfast'
-data_key = 'curred_data/preprocessed_latest.parquet'
+data_key = 'preprocessed_data/preprocessed_latest.parquet'
 model_params_key = 'model/best_params.joblib'
 
 # Fonction pour charger les données depuis S3
@@ -41,13 +41,14 @@ y = df[['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au 
 rf = RandomForestRegressor(**best_params)
 rf.fit(X, y)
 
-# Définir la fonction expected_guests
 def expected_guests(date):
-    month = date.month
-    if month in [6, 7, 8, 12]:
-        return np.random.randint(80, 120)
+    weekday = date.weekday()
+    if weekday in [4, 5]:  # Vendredi et samedi
+        return np.random.randint(140, 150)  # Plus de visiteurs le weekend
+    elif weekday == 6:  # Dimanche
+        return np.random.randint(80, 90)  # Dimanche un peu moins
     else:
-        return np.random.randint(50, 80)
+        return np.random.randint(30, 40)
 
 # Générer les données pour les prédictions pour les 3 jours suivants
 last_date = df['date'].max()

@@ -37,8 +37,8 @@ class DateInput(BaseModel):
 def generate_data(day_input: DayInput):
     date = datetime.strptime(day_input.date, '%Y-%m-%d')
     expected = day_input.expected_guests
-    base_quantity = np.random.randint(20, 50, size=len(items))
-    variation = 1 + (expected / 100)
+    base_quantity = np.random.randint(5, 15, size=len(items))
+    variation = 2 + (expected / 50)  # Augmentation de la variation
     data = {
         'date': [date] * len(items),
         'item': items,
@@ -46,6 +46,7 @@ def generate_data(day_input: DayInput):
         'expected': [expected] * len(items)
     }
     return pd.DataFrame(data)
+
 
 def save_to_s3(df, current_date):
     buffer = BytesIO()

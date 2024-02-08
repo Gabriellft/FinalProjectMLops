@@ -20,7 +20,7 @@ s3 = boto3.client(
     aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
 )
 bucket_name = 'hotel-breakfast'
-parquet_key = 'curred_data/preprocessed_latest.parquet'
+parquet_key = 'preprocessed_data/preprocessed_latest.parquet'
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 def upload_directory_to_s3(bucket_name, directory_name, s3_prefix):
     s3 = boto3.client('s3')

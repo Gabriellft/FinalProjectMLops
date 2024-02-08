@@ -7,8 +7,8 @@ import boto3
 from io import BytesIO
 
 # Configuration pour la simulation de données
-start_date = datetime(2024, 1, 1)
-end_date = datetime(2024, 2, 4)
+start_date = datetime(2021, 1, 1)
+end_date = datetime(2024, 2, 8)
 current_date = start_date
 
 # Items pour les petits-déjeuners
@@ -18,19 +18,21 @@ items = ['croissants', 'pain au chocolat', 'baguettes', 'fruits', 'jus d\'orange
 s3 = boto3.client('s3')
 bucket_name = 'hotel-breakfast'
 
-# Fonction pour générer le nombre de personnes attendues en fonction du mois
+# Fonction pour générer le nombre de personnes attendues avec des variations importantes
 def expected_guests(date):
-    month = date.month
-    if month in [6, 7, 8, 12]:
-        return np.random.randint(80, 120)
+    weekday = date.weekday()
+    if weekday in [4, 5]:  # Vendredi et samedi
+        return np.random.randint(140, 150)  # Plus de visiteurs le weekend
+    elif weekday == 6:  # Dimanche
+        return np.random.randint(80, 90)  # Dimanche un peu moins
     else:
-        return np.random.randint(50, 80)
+        return np.random.randint(30, 40)  # Moins de visiteurs en semaine
 
-# Fonction pour générer des données simulées
+# Fonction pour générer des données simulées avec des relations fortes entre expected_guests et quantités
 def generate_data(date):
     expected = expected_guests(date)
-    base_quantity = np.random.randint(20, 50, size=len(items))
-    variation = 1 + (expected / 100)
+    base_quantity = np.random.randint(5, 15, size=len(items))
+    variation = 2 + (expected / 50)  # Augmentation de la variation
     data = {
         'date': [date] * len(items),
         'item': items,
@@ -44,7 +46,7 @@ def save_to_s3(df, current_date):
     buffer = BytesIO()
     table = pa.Table.from_pandas(df)
     pq.write_table(table, buffer)
-    buffer.seek(0)  # Retourner au début du buffer
+    buffer.seek(0)
     file_name_in_s3 = f'data/{current_date.strftime("%Y-%m-%d")}.parquet'
     
     s3.put_object(Bucket=bucket_name, Key=file_name_in_s3, Body=buffer.getvalue())
