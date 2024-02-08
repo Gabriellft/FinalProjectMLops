@@ -3,7 +3,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -12,7 +12,7 @@ services:
   backend:
     build:
       context: ./BACKEND
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile
     volumes:
       - ./BACKEND:/app
       - /app/node_modules
