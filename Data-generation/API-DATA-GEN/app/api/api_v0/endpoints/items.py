@@ -199,130 +199,135 @@ def load_model_params(bucket, model_key):
 
 @router.post("")
 async def root(date_input: DateInput = Body(...)):
-    # Generation data
-    messages = []
-    for day_input in date_input.days:
-        df_next_day = generate_data(day_input)
-        message = save_to_s3(df_next_day, datetime.strptime(day_input.date, '%Y-%m-%d'))
-        messages.append(message)
-    if not messages:
-        return {"message": "No data was generated."}
-    
-    
-    # Preprocess files => parquet df
-    preprocessed_key = 'preprocessed_data/preprocessed_latest.parquet'
-    if not check_preprocessed_file_exists(bucket_name, preprocessed_key):
+    try: 
+        # Generation data
         
-        print("Preprocessed file not found. Processing all available files.")
-        files = list_parquet_files(bucket_name)
-        df_list = [read_parquet_file_from_s3(bucket_name, file) for file in files]
-        df_combined = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
+        messages = []
+        for day_input in date_input.days:
+            df_next_day = generate_data(day_input)
+            message = save_to_s3(df_next_day, datetime.strptime(day_input.date, '%Y-%m-%d'))
+            messages.append(message)
+        if not messages:
+            return {"message": "No data was generated."}
+        
+        
+        # Preprocess files => parquet df
+        preprocessed_key = 'preprocessed_data/preprocessed_latest.parquet'
+        if not check_preprocessed_file_exists(bucket_name, preprocessed_key):
+            
+            print("Preprocessed file not found. Processing all available files.")
+            files = list_parquet_files(bucket_name)
+            df_list = [read_parquet_file_from_s3(bucket_name, file) for file in files]
+            df_combined = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
 
-        if not df_combined.empty:
-            df_preprocessed = preprocess_df(df_combined)
-            # Sauvegarder le DataFrame prétraité
-            buffer = BytesIO()
-            df_preprocessed.to_parquet(buffer, index=False)
-            buffer.seek(0)
+            if not df_combined.empty:
+                df_preprocessed = preprocess_df(df_combined)
+                # Sauvegarder le DataFrame prétraité
+                buffer = BytesIO()
+                df_preprocessed.to_parquet(buffer, index=False)
+                buffer.seek(0)
 
-            s3.put_object(Bucket=bucket_name, Key=preprocessed_key, Body=buffer.getvalue())
-            print(f'Preprocessed file saved to S3: {preprocessed_key}')
+                s3.put_object(Bucket=bucket_name, Key=preprocessed_key, Body=buffer.getvalue())
+                print(f'Preprocessed file saved to S3: {preprocessed_key}')
+            else:
+                print("No data files found in the specified S3 bucket.")
         else:
-            print("No data files found in the specified S3 bucket.")
-    else:
-        # Logique du premier script
-        print("Preprocessed file found. Processing new files only.")
+            # Logique du premier script
+            print("Preprocessed file found. Processing new files only.")
+            df_preprocessed = get_preprocessed_df(bucket_name, preprocessed_key)
+            last_processed_date = df_preprocessed['date'].max() if df_preprocessed is not None else None
+            print(f'Last processed date: {last_processed_date}')
+            
+            files = list_parquet_files(bucket_name)
+            files_to_process = [f for f in files if last_processed_date is None or pd.to_datetime(f.split('/')[-1].replace('.parquet', '')) > last_processed_date]
+
+            df_list = [read_parquet_file_from_s3(bucket_name, file) for file in files_to_process if files_to_process]
+            df_new = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
+
+            if not df_new.empty:
+                df_updated = preprocess_and_update_df(df_preprocessed, df_new)
+
+                # Sauvegarder le DataFrame mis à jour
+                buffer = BytesIO()
+                df_updated.to_parquet(buffer, index=False)
+                buffer.seek(0)
+
+                s3.put_object(Bucket=bucket_name, Key=preprocessed_key, Body=buffer.getvalue())
+                print(f'Updated preprocessed file saved to S3: {preprocessed_key}')
+            else:
+                print("No new data to process or no data files found in the specified S3 bucket.")
+
+        # transform to json for backend 
+        
+
+        historical_key = 'curred_data/historical/historical_data.json'  # Clé pour le fichier JSON historique
+
         df_preprocessed = get_preprocessed_df(bucket_name, preprocessed_key)
-        last_processed_date = df_preprocessed['date'].max() if df_preprocessed is not None else None
-        print(f'Last processed date: {last_processed_date}')
-        
-        files = list_parquet_files(bucket_name)
-        files_to_process = [f for f in files if last_processed_date is None or pd.to_datetime(f.split('/')[-1].replace('.parquet', '')) > last_processed_date]
 
-        df_list = [read_parquet_file_from_s3(bucket_name, file) for file in files_to_process if files_to_process]
-        df_new = pd.concat(df_list, ignore_index=True) if df_list else pd.DataFrame()
-
-        if not df_new.empty:
-            df_updated = preprocess_and_update_df(df_preprocessed, df_new)
-
-            # Sauvegarder le DataFrame mis à jour
-            buffer = BytesIO()
-            df_updated.to_parquet(buffer, index=False)
-            buffer.seek(0)
-
-            s3.put_object(Bucket=bucket_name, Key=preprocessed_key, Body=buffer.getvalue())
-            print(f'Updated preprocessed file saved to S3: {preprocessed_key}')
+        if df_preprocessed is not None:
+            # Sauvegarder le DataFrame prétraité en JSON
+            save_df_as_json_to_s3(df_preprocessed, bucket_name, historical_key)
         else:
-            print("No new data to process or no data files found in the specified S3 bucket.")
-
-    # transform to json for backend 
-    
-
-    historical_key = 'curred_data/historical/historical_data.json'  # Clé pour le fichier JSON historique
-
-    df_preprocessed = get_preprocessed_df(bucket_name, preprocessed_key)
-
-    if df_preprocessed is not None:
-        # Sauvegarder le DataFrame prétraité en JSON
-        save_df_as_json_to_s3(df_preprocessed, bucket_name, historical_key)
-    else:
-        print("No preprocessed data to convert to JSON or no data files found in the specified S3 bucket.")
+            print("No preprocessed data to convert to JSON or no data files found in the specified S3 bucket.")
+            
+        # Take model and pred next days
+            
+        data_key = 'preprocessed_data/preprocessed_latest.parquet'
+        model_params_key = 'model/best_params.joblib'
+        # Charger les données et les meilleurs paramètres du modèle
         
-    # Take model and pred next days
+        df = load_data_from_s3(bucket_name, data_key)
+        prefix = "model/best_model_"
+        latest_model_key = find_latest_model(bucket_name, prefix)
+        if latest_model_key:
+            best_params = load_model_params(bucket_name, latest_model_key)
+            print(f"Le dernier modèle ({latest_model_key}) a été chargé avec succès.")
+            
+            
+        else:
+            print("Aucun modèle récent trouvé.")
+
+        # Préparer les données pour l'entraînement
+        X = df[['expected', 'month', 'day', 'weekday']]
+        y = df[['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat']]
+
+        # Entraîner le modèle
+        rf = RandomForestRegressor(**best_params)
+        rf.fit(X, y)
         
-    data_key = 'preprocessed_data/preprocessed_latest.parquet'
-    model_params_key = 'model/best_params.joblib'
-    # Charger les données et les meilleurs paramètres du modèle
-    
-    df = load_data_from_s3(bucket_name, data_key)
-    prefix = "model/best_model_"
-    latest_model_key = find_latest_model(bucket_name, prefix)
-    if latest_model_key:
-        best_params = load_model_params(bucket_name, latest_model_key)
-        print(f"Le dernier modèle ({latest_model_key}) a été chargé avec succès.")
+        # Générer les données pour les prédictions pour les 3 jours suivants
+        date = datetime.strptime(day_input.date, '%Y-%m-%d')
         
+        dates = [date + timedelta(days=i) for i in range(0, 3)]
+        expected_guests_by_date = {day_input.date: day_input.expected_guests for day_input in date_input.days}
+
+        X_pred = pd.DataFrame({
+            'date': dates,
+            'expected': [
+                expected_guests_by_date.get(date.strftime('%Y-%m-%d'), expected_guests(date))
+                for date in dates
+            ],
+            'month': [date.month for date in dates],
+            'day': [date.day for date in dates],
+            'weekday': [date.weekday() for date in dates]
+        })
+        print (X_pred)
+
+        # Faire des prédictions
+        y_pred = rf.predict(X_pred[['expected', 'month', 'day', 'weekday']])
+
+        # Sauvegarder les prédictions dans S3
+        for i, date in enumerate(dates):
+            predictions_df = pd.DataFrame([{
+                'date': date.strftime("%Y-%m-%d"),
+                **{col: y_pred[i][j] for j, col in enumerate(['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat'])}
+            }])
+            json_str = predictions_df.to_json(orient='records')
+            output_key = f'output/predictions_{date.strftime("%Y-%m-%d")}.json'
+            s3.put_object(Bucket=bucket_name, Key=output_key, Body=json_str)
+            print(f'Predictions for {date.strftime("%Y-%m-%d")} saved to S3: {bucket_name}/{output_key}')
         
-    else:
-        print("Aucun modèle récent trouvé.")
-
-    # Préparer les données pour l'entraînement
-    X = df[['expected', 'month', 'day', 'weekday']]
-    y = df[['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat']]
-
-    # Entraîner le modèle
-    rf = RandomForestRegressor(**best_params)
-    rf.fit(X, y)
+        return {"messages": messages}
     
-    # Générer les données pour les prédictions pour les 3 jours suivants
-    date = datetime.strptime(day_input.date, '%Y-%m-%d')
-    
-    dates = [date + timedelta(days=i) for i in range(0, 3)]
-    expected_guests_by_date = {day_input.date: day_input.expected_guests for day_input in date_input.days}
-
-    X_pred = pd.DataFrame({
-        'date': dates,
-        'expected': [
-            expected_guests_by_date.get(date.strftime('%Y-%m-%d'), expected_guests(date))
-            for date in dates
-        ],
-        'month': [date.month for date in dates],
-        'day': [date.day for date in dates],
-        'weekday': [date.weekday() for date in dates]
-    })
-    print (X_pred)
-
-    # Faire des prédictions
-    y_pred = rf.predict(X_pred[['expected', 'month', 'day', 'weekday']])
-
-    # Sauvegarder les prédictions dans S3
-    for i, date in enumerate(dates):
-        predictions_df = pd.DataFrame([{
-            'date': date.strftime("%Y-%m-%d"),
-            **{col: y_pred[i][j] for j, col in enumerate(['baguettes', 'café', 'croissants', 'fruits', 'jus d\'orange', 'pain au chocolat'])}
-        }])
-        json_str = predictions_df.to_json(orient='records')
-        output_key = f'output/predictions_{date.strftime("%Y-%m-%d")}.json'
-        s3.put_object(Bucket=bucket_name, Key=output_key, Body=json_str)
-        print(f'Predictions for {date.strftime("%Y-%m-%d")} saved to S3: {bucket_name}/{output_key}')
-    
-    return {"messages": messages}
+    except Exception as e:
+        return {"Error": f"{e}"}
