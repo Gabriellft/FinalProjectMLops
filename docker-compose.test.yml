@@ -1,19 +1,26 @@
-version: '3.8'
-services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    command: npm test
-
-  backend:
-    build:
-      context: ./BACKEND
-      dockerfile: Dockerfile
-    volumes:
-      - ./BACKEND:/app
-      - /app/node_modules
-    command: npm test
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+    
+    - name: Install dependencies and run tests for frontend
+      working-directory: ./frontend
+      run: |
+        npm install
+        npm test
+        
+    - name: Install dependencies and run tests for backend
+      working-directory: ./BACKEND
+      run: |
+        npm install
+        npm test
+    
+    - name: Build and run Docker containers
+      run: |
+        docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
