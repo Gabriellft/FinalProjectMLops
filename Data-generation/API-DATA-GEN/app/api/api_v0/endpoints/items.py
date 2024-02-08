@@ -327,7 +327,17 @@ async def root(date_input: DateInput = Body(...)):
             s3.put_object(Bucket=bucket_name, Key=output_key, Body=json_str)
             print(f'Predictions for {date.strftime("%Y-%m-%d")} saved to S3: {bucket_name}/{output_key}')
         
-        return {"message": f"Data processed and predictions made for {dates} with excpected guests : {expected_guests_by_date}"}
+        
+        formatted_dates = ', '.join(date.strftime('%Y-%m-%d') for date in dates)
+
+        # Format the expected guests message
+        expected_guests_message = ', '.join(f'{date}: {guests} guests' for date, guests in expected_guests_by_date.items())
+
+        # Construct the final message
+        message = f"Data processed and predictions made for {formatted_dates} with expected guests: {expected_guests_message}"
+
+        return {"message": message}
+        
     
     except Exception as e:
         error_info = traceback.format_exc()
