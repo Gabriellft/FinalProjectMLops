@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 from datetime import datetime, timedelta
 import joblib
 import re
-
+import traceback
 
 
 
@@ -330,4 +330,6 @@ async def root(date_input: DateInput = Body(...)):
         return {"messages": messages}
     
     except Exception as e:
-        return {"Error": f"{e}"}
+        error_info = traceback.format_exc()
+        logging.error("An error occurred: %s", error_info)
+        return {"Error": f"An unexpected error occurred: {str(e)}. Check logs for more details."}
