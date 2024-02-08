@@ -11,7 +11,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./BACKEND
       dockerfile: Dockerfile.backend
     volumes:
       - ./BACKEND:/app
