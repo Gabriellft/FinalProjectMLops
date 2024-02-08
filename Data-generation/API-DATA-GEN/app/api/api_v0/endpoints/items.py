@@ -1,12 +1,13 @@
 from fastapi import Body, Depends, Header, APIRouter
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 import boto3
 from io import BytesIO
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+from typing import List
 
 router = APIRouter(prefix='/generate_date', tags=["Generate Next Days Data"])
 
@@ -17,11 +18,25 @@ bucket_name = 'hotel-breakfast'
 # Initialisation du client S3
 s3 = boto3.client('s3')
 
-class DateInput(BaseModel):
-    end_date: str  # Utiliser une chaîne de caractères pour la date
-    expected_guests: int  # Ajout de la nouvelle entrée pour les invités attendus
+class DayInput(BaseModel):
+    date: str  # Date sous forme de chaîne de caractères
+    expected_guests: int  # Nombre d'invités attendus pour cette date
 
-def generate_data(date, expected):
+    # Validation pour s'assurer que la date est dans un format correct
+    @validator('date')
+    def date_format_validator(cls, v):
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError("Date must be in YYYY-MM-DD format")
+
+class DateInput(BaseModel):
+    days: List[DayInput]  # Liste des objets DayInput
+
+def generate_data(day_input: DayInput):
+    date = datetime.strptime(day_input.date, '%Y-%m-%d')
+    expected = day_input.expected_guests
     base_quantity = np.random.randint(20, 50, size=len(items))
     variation = 1 + (expected / 100)
     data = {
@@ -42,37 +57,15 @@ def save_to_s3(df, current_date):
     s3.put_object(Bucket=bucket_name, Key=file_name_in_s3, Body=buffer.getvalue())
     return f'File {file_name_in_s3} uploaded to S3.'
 
-def find_last_generated_date(bucket):
-    response = s3.list_objects_v2(Bucket=bucket, Prefix='data/')
-    files = [item['Key'] for item in response.get('Contents', []) if item['Key'].endsWith('.parquet')]
-    dates = [datetime.strptime(file.split('/')[-1].replace('.parquet', ''), '%Y-%m-%d') for file in files]
-    return max(dates) if dates else None
-
 @router.post("")
 async def root(date_input: DateInput = Body(...)):
-    # Parser la chaîne de caractères en un objet datetime
-    try:
-        end_date = datetime.strptime(date_input.end_date, '%Y-%m-%d')
-        expected_guests = date_input.expected_guests  # Récupération des invités attendus de l'entrée
-        
-        last_generated_date = find_last_generated_date(bucket_name)
-        if last_generated_date:
-            next_date = last_generated_date + timedelta(days=1)
-        else:
-            next_date = datetime.now().date()  # Assuming start today if no data found
-        
-        messages = []
-        while next_date <= end_date:
-            df_next_day = generate_data(next_date, expected_guests)  # Passer expected_guests comme argument
-            message = save_to_s3(df_next_day, next_date)
-            messages.append(message)
-            next_date += timedelta(days=1)
-        
-        if not messages:
-            return {"message": "All data up to the end date has already been generated or no data found."}
-        
-        return {"messages": messages}
+    messages = []
+    for day_input in date_input.days:
+        df_next_day = generate_data(day_input)
+        message = save_to_s3(df_next_day, datetime.strptime(day_input.date, '%Y-%m-%d'))
+        messages.append(message)
     
-    except Exception as e:
-        # Logging the exception can help diagnose the problem
-        return {"Error": "Error processing your request", "Exception": str(e)}
+    if not messages:
+        return {"message": "No data was generated."}
+    
+    return {"messages": messages}
