@@ -13,8 +13,12 @@ import mlflow.sklearn
 import matplotlib.pyplot as plt
 import os
 
-# Initialiser le client S3
-s3 = boto3.client('s3')
+# Initialiser le client S3 en utilisant les variables d'environnement
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+)
 bucket_name = 'hotel-breakfast'
 parquet_key = 'curred_data/preprocessed_latest.parquet'
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -47,7 +51,7 @@ def save_to_s3(bucket, key, content, is_json=True):
     s3_buffer.close()
 
 # Configuration de MLflow
-mlflow.set_tracking_uri("file:///mlruns")
+mlflow.set_tracking_uri("file:///app/mlruns")
 mlflow.set_experiment('Hotel Breakfast TimeSeries Split')
 
 mlflow.sklearn.autolog()
