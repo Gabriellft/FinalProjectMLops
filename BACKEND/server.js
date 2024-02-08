@@ -93,19 +93,20 @@ app.get('/historical-data', async (req, res) => {
 
 const fetch = require('node-fetch');
 
-// Endpoint pour générer des données basées sur la date de fin
+// Endpoint call ml api
 app.post('/api/v0/generate_date', async (req, res) => {
-  const { end_date } = req.body;
+  // Utilisez l'URL de votre API externe comme précédemment
   const apiUrl = 'https://4pjofaefviftewv7vuyuidevha0rylgc.lambda-url.eu-west-3.on.aws/api/v0/generate_date';
   
   try {
+    // La requête doit maintenant inclure le tableau `days` avec les données fournies par le client
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'accept': 'application/json',
       },
-      body: JSON.stringify({ end_date }),
+      body: JSON.stringify(req.body), // Transmet directement le corps de la requête reçue
     });
     
     if (!response.ok) throw new Error('Erreur lors de l\'appel à l\'API externe');
@@ -117,6 +118,7 @@ app.post('/api/v0/generate_date', async (req, res) => {
     res.status(500).send('Erreur lors de la génération des données');
   }
 });
+
 
 
 app.listen(port, () => {

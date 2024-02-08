@@ -7,7 +7,7 @@ import boto3
 from io import BytesIO
 
 # Configuration pour la simulation de données
-start_date = datetime(2021, 1, 1)
+start_date = datetime(2023, 1, 1)
 end_date = datetime(2024, 2, 8)
 current_date = start_date
 

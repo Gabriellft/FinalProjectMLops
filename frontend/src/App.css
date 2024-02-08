@@ -1,87 +1,51 @@
-/* App.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Styles globaux */
 body {
-  font-family: 'Nunito', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f7f8fc; 
-  color: #33374B; /* Couleur de texte générale plus douce */
-}
-
-/* Styles de l'application */
-.App {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  @apply font-sans bg-gray-100 text-gray-800;
 }
 
 .header {
-  background-color: #394263; 
-  color: white;
-  text-align: center;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ajout d'ombre pour du relief */
+  @apply bg-gray-800 text-white text-center py-5 shadow-md;
 }
 
 .dashboard {
-  display: flex;
-  flex-direction: row;
-  transition: 0.3s; /* Transition douce pour le re-dimensionnement */
+  @apply flex flex-row transition-all duration-300;
 }
 
-/* Styles de la barre latérale */
 .sidebar {
-  width: 250px;
-  background-color: #394263; /* Plus foncé pour contraster avec le contenu */
-  color: white;
-  padding: 20px;
-  transition: all 0.3s; /* Transition douce pour les effets de survol */
+  @apply w-64 bg-gray-800 text-white p-5 transition-all duration-300;
 }
 
 .sidebar ul {
-  list-style: none;
-  padding: 0;
+  @apply list-none p-0;
 }
 
 .sidebar li {
-  margin-bottom: 15px; /* Espacement légèrement augmenté */
+  @apply mb-4;
 }
 
 .sidebar a {
-  text-decoration: none;
-  color: #adb5bd; /* Couleur plus douce pour un contraste moins agressif */
-  font-weight: bold;
+  @apply no-underline text-gray-400 font-bold;
 }
 
 .sidebar a:hover {
-  color: white;
-  margin-left: 5px; /* Déplacement subtil pour indiquer l'interaction */
+  @apply text-white ml-1;
 }
 
-/* Styles du contenu principal */
 .main-content {
-  flex-grow: 1;
-  padding: 20px;
-  background-color: #ffffff; /* Fond clair pour le contraste */
-  border-left: 2px solid #edf2f7; /* Ligne de séparation subtile */
+  @apply flex-grow p-5 bg-white border-l-2 border-gray-200;
 }
 
-/* Styles des liens dans le contenu principal */
 .main-content a {
-  text-decoration: none; /* Supprimer le soulignage par défaut */
-  color: #0052cc; /* Couleur cohérente avec l'en-tête */
-  font-weight: bold; /* Rendre les liens audacieux */
+  @apply no-underline text-blue-600 font-bold;
 }
 
 .main-content a:hover {
-  text-decoration: underline; /* Indicateur clair de lien cliquable */
+  @apply underline;
 }
 
-/* Styles pour le graphique (TimeSeriesChart) */
 #chart {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px; /* Bords arrondis pour un look moderne */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Ombre plus légère et plus douce */
+  @apply bg-white p-5 rounded-lg shadow-md;
 }

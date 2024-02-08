@@ -6,8 +6,8 @@ const Sidebar = () => {
   return (
     <nav className="sidebar">
       <ul>
+        <li><Link to="/"><IoTime /> Client Input</Link></li>
         <li><Link to="/predictions"><IoStatsChart /> Prédictions</Link></li>
-        <li><Link to="/predictions/chart"><IoTime /> Graphique</Link></li>
         <li><Link to="/comparison"><IoAnalytics /> Comparaison</Link></li>
         <li><Link to="/historical"><IoCalendar /> Historique</Link></li>
       </ul>
