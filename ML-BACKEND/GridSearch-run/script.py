@@ -110,7 +110,7 @@ for train_index, test_index in tscv.split(X):
 # Sauvegarde manuelle du meilleur modèle dans S3
 save_to_s3(bucket_name, f'model/best_model_{timestamp}.joblib', best_model, is_json=False)
 log_content = f"Date du run: {timestamp}\nMeilleurs paramètres: {best_params}\nMeilleur RMSE moyen: {best_rmse}\nMeilleur MAE: {mae}\nMeilleur R²: {r2}"
-save_to_s3(bucket_name, f'logs/log_{timestamp}.txt', pd.Series([log_content]), is_json=False)
+save_to_s3(bucket_name, f'logs/log_{timestamp}.json', pd.Series([log_content]), is_json=True)
 print(f"Meilleur RMSE moyen: {best_rmse}")
 print(f"Log et meilleur modèle sauvegardés dans S3: {bucket_name}")
 upload_directory_to_s3(bucket_name, 'mlruns', 'mlflow/')
