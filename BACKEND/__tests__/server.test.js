@@ -1,10 +1,9 @@
 const AWSMock = require('aws-sdk-mock');
 const request = require('supertest');
 const app = require('../server'); // Ensure paths correctly point to your server file
-let server;
+
 // Setup AWS S3 mocks before all tests
 beforeAll(() => {
-  server = app.listen(0, done); // Start the Express server if it's not already running
   AWSMock.mock('S3', 'getObject', (params, callback) => {
     // Mock for /historical-data endpoint
     if (params.Key === 'curred_data/historical/historical_data.json') {
@@ -67,5 +66,5 @@ test('GET /api/v0/gen-data should return "Root Generation data" message', async 
 // Restore AWS S3 mocks after all tests
 afterAll(() => {
   AWSMock.restore('S3');
-  server.close(done);
+  
 });
