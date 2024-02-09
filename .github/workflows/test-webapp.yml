@@ -17,7 +17,13 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: '14'
-         
+        
+    - name: Install dependencies and run tests (Frontend)
+      working-directory: ./frontend
+      run: |
+        npm install
+        npm test
+        
     - name: Build Docker images and run
       run: docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
     

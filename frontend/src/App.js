@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import PredictionsPage from './pages/PredictionsPage';
+import PredictionsPage from './pages/PredictionsPage.js';
 import ComparisonPage from './pages/ComparisonPage';
 import HistoricalPage from './pages/HistoricalPage';
 import Sidebar from './components/Sidebar';

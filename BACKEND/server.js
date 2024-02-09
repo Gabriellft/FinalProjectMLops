@@ -10,7 +10,7 @@ const bucketName = 'hotel-breakfast';
 
 app.use(cors());
 app.use(express.json());
-
+module.exports = app;
 const fetchGenerateDateData = async (endDate) => {
   const apiUrl = '/api/v0/generate_date'; // Assurez-vous que cette URL correspond à l'endpoint de votre serveur
   try {
@@ -119,6 +119,26 @@ app.post('/api/v0/generate_date', async (req, res) => {
   }
 });
 
+app.get('/api/v0/gen-data', async (req, res) => {
+  const apiUrl = 'https://4pjofaefviftewv7vuyuidevha0rylgc.lambda-url.eu-west-3.on.aws/api/v0/gen-data';
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) throw new Error('Erreur lors de l\'appel à l\'API externe');
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Erreur lors de la récupération des données');
+  }
+});
 
 
 app.listen(port, () => {

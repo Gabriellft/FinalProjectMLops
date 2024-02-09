@@ -7,7 +7,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: npm test
+    command: npm help
 
   backend:
     build:
