@@ -18,8 +18,8 @@ jobs:
       with:
         node-version: '14'
         
-    - name: Install dependencies and run tests (Frontend)
-      working-directory: ./frontend
+    - name: Install dependencies and run tests (backend)
+      working-directory: ./BACKEND
       run: |
         npm install
         npm test
