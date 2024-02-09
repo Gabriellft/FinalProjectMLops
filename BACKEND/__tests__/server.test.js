@@ -66,4 +66,5 @@ test('GET /api/v0/gen-data should return "Root Generation data" message', async 
 // Restore AWS S3 mocks after all tests
 afterAll(() => {
   AWSMock.restore('S3');
+  server.close(done);
 });
