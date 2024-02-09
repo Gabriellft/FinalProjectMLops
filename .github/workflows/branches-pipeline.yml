@@ -1,0 +1,110 @@
+name: CI/CD Pipeline Branches
+
+on:
+  push:
+    branches: [ main, staging, dev ]
+  pull_request:
+    branches: [ main, staging, dev ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+
+  
+
+  node-build-and-test:
+    if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/staging' || github.ref =='refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - name: Install dependencies and run tests
+        working-directory: ./BACKEND
+        run: |
+          npm install
+          npm test -- --forceExit
+
+  staging-build-and-test:
+    if: github.ref == 'refs/heads/staging'
+    needs: node-build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3
+      - name: Install dependencies and run tests
+        working-directory: ./BACKEND
+        run: |
+          npm install
+          npm test -- --forceExit
+      - name: Build Docker images and run tests
+        run: |
+          AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+          AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+          AWS_REGION=eu-west-3 \
+          docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
+
+  build-and-push-docker-lambda-api:
+    if: github.ref == 'refs/heads/main'
+    needs: node-build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-3
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsSession
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 426166744527.dkr.ecr.eu-west-3.amazonaws.com
+      - name: Build, tag, and push Docker image to Amazon ECR
+        run: |
+          docker build -t ml-datagen ./API-ML-AWS
+          docker tag ml-datagen:latest 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-datagen:latest
+          docker push 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-datagen:latest
+      - name: Update Lambda function to use new Docker image
+        run: |
+          aws lambda update-function-code --function-name ml-datagen --image-uri 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-datagen:latest
+
+   
+  build-and-push-docker-ml-gridsearch:
+    if: github.ref == 'refs/heads/main'
+    needs: node-build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-3
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsSession
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 426166744527.dkr.ecr.eu-west-3.amazonaws.com
+      - name: Build, tag, and push Docker image to Amazon ECR for ML GridSearch
+        run: |
+            docker build -t ml-gridsearch ./ML-BACKEND/GridSearch-run-AWS
+            docker tag ml-gridsearch:latest 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-gridsearch:latest
+            docker push 426166744527.dkr.ecr.eu-west-3.amazonaws.com/ml-gridsearch:latest
+      
+
