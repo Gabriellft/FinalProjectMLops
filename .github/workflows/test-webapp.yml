@@ -6,9 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  id-token: write
-  contents: read
+
 
 jobs:
   build-and-test:
@@ -21,14 +19,15 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '14'
-      
-      - name: Configure AWS credentials through OIDC
+ 
+      # Set up AWS CLI with credentials from GitHub Secrets
+      - name: Configure AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-region: eu-west-3  # Change this to your AWS region
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-session-name: GitHubActionsSession
-
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-3 
+ 
       - name: Install dependencies and run tests (backend)
         working-directory: ./BACKEND
         run: |
