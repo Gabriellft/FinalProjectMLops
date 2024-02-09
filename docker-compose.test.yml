@@ -15,4 +15,8 @@ services:
     volumes:
       - ./BACKEND:/app
       - /app/node_modules
+    environment:
+      AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+      AWS_REGION: "eu-west-3"
     command: npm test
