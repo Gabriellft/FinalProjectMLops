@@ -10,7 +10,7 @@ const bucketName = 'hotel-breakfast';
 
 app.use(cors());
 app.use(express.json());
-module.exports = app;
+
 const fetchGenerateDateData = async (endDate) => {
   const apiUrl = '/api/v0/generate_date'; // Assurez-vous que cette URL correspond à l'endpoint de votre serveur
   try {
@@ -141,6 +141,10 @@ app.get('/api/v0/gen-data', async (req, res) => {
 });
 
 
-app.listen(port, () => {
-  console.log(`Serveur démarré sur http://localhost:${port}`);
-});
+module.exports = app;
+
+// Optionally, if you want to keep the ability to start the server manually for development:
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+}
